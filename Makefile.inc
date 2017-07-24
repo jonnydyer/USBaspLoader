@@ -6,7 +6,7 @@
 # License: GNU GPL v2 (see License.txt)
 
 F_CPU = 16000000
-DEVICE = atmega8
+DEVICE = atmega328p
 
 # where the updating firmware should be located (starting address)
 FLASHADDRESS = 0x0000
@@ -22,12 +22,13 @@ DEFINES += -DCONFIG_NO__CHIP_ERASE -DCONFIG_NO__ONDEMAND_PAGEERASE -DCONFIG_NO__
 ;DEFINES += -DCONFIG_HAVE__BOOTLOADER_ALWAYSENTERPROGRAMMODE
 
 # have the bootloader exit itself after around 3 seconds (@16MHz) inactivity
-;DEFINES += -DCONFIG_BOOTLOADER_LOOPCYCLES_TIMEOUT=16 -DCONFIG_HAVE__BOOTLOADER_ABORTTIMEOUTONACT
+DEFINES += -DCONFIG_BOOTLOADER_LOOPCYCLES_TIMEOUT=16 -DCONFIG_HAVE__BOOTLOADER_ABORTTIMEOUTONACT
 
 # save the PROG button on the layout (CAREFUL - read feature description first)
 ;DEFINES += -DCONFIG_HAVE__BOOTLOADER_IGNOREPROGBUTTON
 
-
+# Bootloader callable from app
+DEFINES += -DHAVE_BOOTLOADERENTRY_FROMSOFTWARE
 
 # some MCUs with small BLS (bootloader section) need to deactivate some
 # features in order to fit into BLS.
@@ -37,7 +38,8 @@ DANGEROUS=0
 
 # PROGRAMMER contains AVRDUDE options to address your programmer
 # PROGRAMMER = -c pony-stk200
-PROGRAMMER = -c usbasp
+# PROGRAMMER = -c usbasp
+PROGRAMMER = -c avrispv2 -P /dev/tty.usbserial
 
 #  since USBaspLoader supports HAVE_BLB11_SOFTW_LOCKBIT...
 LOCKOPT = -U lock:w:0x3f:m
@@ -151,7 +153,7 @@ DEFINES_168             = -DCONFIG_USE__EXCESSIVE_ASSEMBLER -DCONFIG_NO__NEED_WA
 
 
 
-FUSEOPT_328             = -U lfuse:w:0xd7:m -U hfuse:w:0xd0:m -U efuse:w:0x04:m
+FUSEOPT_328             = -U lfuse:w:0xd7:m -U hfuse:w:0xd0:m -U efuse:w:0x07:m
 BOOTLOADER_ADDRESS_328  = 0x7000
 DEFINES_328             = #-DEMPTY
 

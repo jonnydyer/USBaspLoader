@@ -70,7 +70,7 @@
  * device is powered from the USB bus.
  */
 #ifndef USB_CFG_MAX_BUS_POWER   // allow bootloaderconfig.h to override
-#define USB_CFG_MAX_BUS_POWER           100
+#define USB_CFG_MAX_BUS_POWER           500
 #endif
 /* Set this variable to the maximum USB bus power consumption of your device.
  * The value is in milliamperes. [It will be divided by two since USB
@@ -322,12 +322,12 @@
  * interrupt than INT0, you may have to define some of these.
  */
 /* #define USB_INTR_CFG            MCUCR */
-/* #define USB_INTR_CFG_SET        ((1 << ISC00) | (1 << ISC01)) */
+#define USB_INTR_CFG_SET        ((1 << ISC10) | (1 << ISC11))
 /* #define USB_INTR_CFG_CLR        0 */
 /* #define USB_INTR_ENABLE         GIMSK */
-/* #define USB_INTR_ENABLE_BIT     INT0 */
+#define USB_INTR_ENABLE_BIT     INT1
 /* #define USB_INTR_PENDING        GIFR */
-/* #define USB_INTR_PENDING_BIT    INTF0 */
-/* #define USB_INTR_VECTOR         INT0_vect */
+#define USB_INTR_PENDING_BIT    INTF1
+#define USB_INTR_VECTOR         INT1_vect
 
 #endif /* __usbconfig_h_included__ */

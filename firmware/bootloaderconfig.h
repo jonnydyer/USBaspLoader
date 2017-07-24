@@ -60,7 +60,7 @@ these macros are defined, the boot loader usees them.
   #if (defined(__AVR_ATmega640__) || defined (__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__))
     #define USB_CFG_INTPORT_BIT 0
   #else
-    #define USB_CFG_INTPORT_BIT 2
+    #define USB_CFG_INTPORT_BIT 3
   #endif
 #endif
 /* Not all devices have their INT0 on PD2.
@@ -71,7 +71,8 @@ these macros are defined, the boot loader usees them.
 
 #ifndef USB_CFG_DMINUS_BIT
   /* This is Revision 3 and later (where PD6 and PD7 were swapped */
-  #define USB_CFG_DMINUS_BIT      7    /* Rev.2 and previous was 6 */
+  //#define USB_CFG_DMINUS_BIT      7    /* Rev.2 and previous was 6 */
+  #define USB_CFG_DMINUS_BIT      2
 #endif
 /* This is the bit number in USB_CFG_IOPORT where the USB D- line is connected.
  * This may be any bit in the port.
@@ -86,12 +87,21 @@ these macros are defined, the boot loader usees them.
 #ifndef JUMPER_PORT
   #define JUMPER_PORT		USB_CFG_IOPORTNAME
 #endif
+
+#ifndef STATUS_LED_PORT
+  #define STATUS_LED_PORT		D
+#endif
+
+#ifndef STATUS_LED_PIN
+  #define STATUS_LED_PIN		4
+#endif
+
 /* 
  * jumper is connected to this port
  */
 #ifndef JUMPER_BIT
   /* This is Revision 3 and later (where PD6 and PD7 were swapped */
-  #define JUMPER_BIT           6       /* Rev.2 and previous was 7 */
+  #define JUMPER_BIT           7       /* Rev.2 and previous was 7 */
 #endif
 /* 
  * jumper is connected to this bit in port "JUMPER_PORT", active low
@@ -590,7 +600,8 @@ static inline void  bootLoaderInit(void)
     PIN_DDR(JUMPER_PORT)  = 0;
     PIN_PORT(JUMPER_PORT) = (1<< PIN(JUMPER_PORT, JUMPER_BIT)); /* activate pull-up */
 #endif
-
+		PIN_DDR(STATUS_LED_PORT) |= (1<<PIN(STATUS_LED_PORT, STATUS_LED_PIN));
+		PIN_PORT(STATUS_LED_PORT) &= ~(1<<PIN(STATUS_LED_PORT, STATUS_LED_PIN));
 //     deactivated by Stephan - reset after each avrdude op is annoing!
 //     if(!(MCUCSR & (1 << EXTRF)))    /* If this was not an external reset, ignore */
 //         leaveBootloader();
@@ -602,6 +613,7 @@ static inline void  bootLoaderExit(void)
 #else
     PIN_PORT(JUMPER_PORT) = 0;		/* undo bootLoaderInit() changes */
 #endif
+		PIN_DDR(STATUS_LED_PORT) &= ~(1<<PIN(STATUS_LED_PORT, STATUS_LED_PIN));
 }
 
 
@@ -613,16 +625,8 @@ static inline void  bootLoaderExit(void)
 
 #if (HAVE_BOOTLOADERENTRY_FROMSOFTWARE)
 /*
- * How it works: The idea
- * 
- * During normal C initialization, the stackpointer (SP) always is pointed to
- * SRAMs end, where it grows towards RAMSTART.
- * 
- * Check if last possible pushed address in stack is bootloaders address. 
- * Store investigation result into "__BOOTLOADERENTRY_FROMSOFTWARE__bootup_RAMEND_doesmatch"
- * Result will be "0xff" in case of mismatch.
+ * Re-implementation of application jump BL entry JD 2017
  */
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -635,13 +639,8 @@ static volatile uint8_t __BOOTLOADERENTRY_FROMSOFTWARE__bootup_MCUCSR __attribut
 #	else
 static inline bool bootLoaderCondition(void)
 {
-  if (__BOOTLOADERENTRY_FROMSOFTWARE__bootup_MCUCSR & (~(_BV(WDRF)))) {
-  } else {
-    if (__BOOTLOADERENTRY_FROMSOFTWARE__bootup_RAMEND_doesmatch == (__BOOTLOADERENTRY_FROMSOFTWARE__EXPECTEDADDRESS & 0xff)) {
-      // anything else: match - the firmware is calling the bootloader
-      return true;
-    }
-  }
+  if(MCUSR == 0)
+		return true;
   return bootLoaderConditionSimple();
 }
 #	endif
